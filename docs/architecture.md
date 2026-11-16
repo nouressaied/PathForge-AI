@@ -34,65 +34,18 @@ l'architecture cible du prototype.
 
 ## 2. Schéma d'architecture générale
 
+
 ```mermaid
 flowchart TD
-
-    subgraph ING["1. INGESTION"]
-        A["CV et projets étudiants"]
-        B["Offres d'emploi"]
-        C["Référentiel ESCO"]
-        D["Extraction et nettoyage"]
-        E["Extraction et normalisation des compétences"]
-        F["Chunking des documents textuels"]
-        EMB["Embeddings BGE-M3"]
-
-        A --> D
-        B --> D
-        C --> D
-        D --> E
-        E --> F
-        F --> EMB
-    end
-
-    subgraph DATA["2. STOCKAGE"]
-        Q["Qdrant - Index dense et sparse"]
-        N["Neo4j - Graphe de connaissances"]
-        P["PostgreSQL - Profils et historiques"]
-    end
-
-    EMB --> Q
-    E --> N
-
-    subgraph RAG["3. MOTEUR GRAPHRAG"]
-        API["FastAPI - Orchestration"]
-        SEARCH["Recherche hybride BM25 et dense"]
-        RERANK["Fusion et reranking"]
-        GRAPH["Exploration du graphe"]
-        CONTEXT["Contexte documentaire et preuves"]
-        LLM["LLM - Recommandations sourcées"]
-
-        API --> SEARCH
-        SEARCH --> Q
-        Q --> RERANK
-        API --> GRAPH
-        GRAPH --> N
-        N --> GRAPH
-        RERANK --> CONTEXT
-        GRAPH --> CONTEXT
-        CONTEXT --> LLM
-        LLM --> API
-    end
-
-    UI["React - Interface étudiant"]
-    UI -->|"Profil et métier cible"| API
-    API -->|"Résultats et sources"| UI
-
-    API --> P
-    P --> API
-
-    EVAL["Ragas - Évaluation"]
-    API -.-> EVAL
+    A["Sources de données"] --> B["Ingestion"]
+    B --> C["Qdrant"]
+    B --> D["Neo4j"]
+    C --> E["FastAPI"]
+    D --> E
+    E --> F["LLM"]
+    F --> G["React"]
 ```
+
 
 **Lecture du schéma :**
 
