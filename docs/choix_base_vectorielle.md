@@ -1,208 +1,194 @@
 
 # Choix de la base vectorielle — PathForge AI
 
-## 1. Contexte et besoins
+## 1. Contexte de la décision
 
-PathForge AI est une plateforme d'orientation professionnelle
-reposant sur une architecture GraphRAG hybride.
+PathForge AI nécessite une base vectorielle
+pour indexer et retrouver les passages documentaires
+provenant des CV, projets et offres d'emploi.
 
-Elle exploite trois sources principales :
-- Le référentiel ESCO : métiers et compétences.
-- Les offres d'emploi : exigences professionnelles.
-- Les CV et projets : compétences des étudiants.
+Les besoins principaux sont :
 
-Le moteur de recherche doit identifier des documents
-pertinents même lorsque les compétences sont formulées
-différemment.
+- Recherche sémantique.
+- Recherche hybride dense et lexicale.
+- Filtrage par métadonnées.
+- Récupération rapide des candidats.
+- Déploiement local simple.
+- Intégration avec Python et FastAPI.
 
-La base vectorielle doit répondre à quatre besoins :
-1. Recherche sémantique performante.
-2. Recherche hybride lexicale et vectorielle.
-3. Filtrage précis par métadonnées.
-4. Déploiement local reproductible.
+Trois solutions sont étudiées :
 
-## 2. Comparaison des solutions
+1. Qdrant.
+2. Milvus.
+3. PostgreSQL avec pgvector.
 
-Trois solutions ont été étudiées :
-Qdrant, Milvus et pgvector.
+## 2. Critères de comparaison
+
+### Recherche vectorielle
+
+La base doit permettre l'indexation
+et la recherche des embeddings.
+
+### Recherche hybride
+
+Le système doit combiner recherche dense
+et recherche lexicale de type BM25.
+
+### Filtrage par métadonnées
+
+Les recherches doivent pouvoir utiliser :
+
+- Source documentaire.
+- Type de document.
+- Identifiant du métier.
+- Identifiant du profil.
+- Référence ESCO, si applicable.
+
+### Performance
+
+La latence des requêtes et la capacité
+à gérer l'augmentation du corpus sont importantes.
+
+### Exploitation locale
+
+La solution doit être utilisable
+sur les machines de développement de l'équipe.
+
+## 3. Tableau comparatif
 
 | Critère | Qdrant | Milvus | pgvector |
 |---|---|---|---|
-| Recherche dense | Native | Native | Extension PostgreSQL |
-| Recherche hybride | Dense + sparse / BM25 | Dense + sparse | Vecteurs + Full-Text Search |
-| Filtrage par métadonnées | Payload JSON et index | Filtres scalaires | WHERE SQL et index |
-| Index HNSW | Oui | Oui | Oui |
-| Déploiement local | Docker simple | Docker, plusieurs composants possibles | PostgreSQL + extension |
-| Intégration Python | qdrant-client | pymilvus | psycopg / SQLAlchemy |
-| Pertinence pour PathForge | Très adaptée | Adaptée | Alternative crédible |
+| Recherche vectorielle | Native | Native | Extension PostgreSQL |
+| HNSW | Oui | Oui | Oui |
+| Filtrage de métadonnées | Payload filtering | Filtrage scalaire | SQL WHERE |
+| Recherche hybride | Dense et sparse | Plusieurs possibilités hybrides | Combinaison SQL et recherche vectorielle |
+| Déploiement local | Simple avec Docker | Potentiellement plus complexe | Simple si PostgreSQL existe |
+| Intégration Python | SDK dédié | SDK dédié | Écosystème PostgreSQL |
+| Complexité opérationnelle | Modérée | Variable selon le mode | Faible à modérée |
+| Usage privilégié | Recherche vectorielle applicative | Recherche vectorielle évolutive | Recherche intégrée à SQL |
 
-## 3. Critère 1 — Filtrage par métadonnées
+## 4. Analyse des solutions
 
-PathForge doit pouvoir restreindre les recherches
-selon différents critères :
+### Qdrant
 
-- Métier cible : Data Engineer, AI Engineer, etc.
-- Type de document : CV, offre, projet.
-- Source : ESCO, Kaggle ou profil étudiant.
-- Compétence ou identifiant ESCO.
-- Date de publication d'une offre.
+Points forts :
 
-Qdrant permet d'associer des métadonnées JSON
-(payload) à chaque document vectorisé.
+- API dédiée aux recherches vectorielles.
+- Support des vecteurs denses et sparse.
+- Filtrage des payloads.
+- Indexation HNSW.
+- Client Python.
+- Déploiement local direct avec Docker.
 
-Exemple de métadonnées envisagées :
+Limites :
 
-```json
-{
-  "doc_id": "job_001",
-  "source": "linkedin_kaggle",
-  "document_type": "job_offer",
-  "job_title": "Data Engineer",
-  "esco_uri": "identifiant_esco",
-  "publication_year": 2024
-}
-```
+- Service supplémentaire à maintenir.
+- Nécessité de coordonner les données
+  avec PostgreSQL et Neo4j.
 
-Ces filtres permettront de rechercher uniquement
-les informations pertinentes pour le métier ciblé.
+### Milvus
 
-Des index de payload seront configurés sur les
-champs fréquemment utilisés dans les filtres.
+Points forts :
 
-Les données privées des étudiants devront être
-isolées par des contrôles d'accès applicatifs.
+- Moteur spécialisé pour la recherche vectorielle.
+- Plusieurs stratégies d'indexation.
+- Possibilités de montée en charge.
+- Fonctions de recherche hybride.
 
-## 4. Critère 2 — Latence et performances
+Limites :
 
-La latence représente le temps nécessaire
-pour retrouver les informations pertinentes.
+- Exploitation potentiellement plus complexe
+  selon l'architecture de déploiement.
+- Surdimensionnement possible pour un premier prototype.
 
-Qdrant prend en charge des index de recherche
-approximative HNSW et le filtrage par métadonnées.
+### pgvector
 
-La recherche hybride permettra de combiner :
-- BM25 : correspondance lexicale.
-- Embeddings : similarité sémantique.
-- Fusion : combinaison des résultats.
-- Cross-Encoder : reranking des candidats.
+Points forts :
 
-Le Cross-Encoder sera exécuté dans le pipeline
-applicatif après la récupération des candidats.
+- Intégration directe dans PostgreSQL.
+- Requêtes SQL et filtres relationnels.
+- Infrastructure simplifiée si PostgreSQL
+  est déjà le stockage principal.
 
-Objectifs d'évaluation :
-- Recall@10 >= 85 %.
-- Recall@5 >= 80 %.
-- Latence E2E P95 < 3,5 secondes.
-- Temps d'insertion cible < 50 ms par lot
-  de 64 chunks, conformément au backlog.
+Limites :
 
-Ces seuils sont des objectifs à mesurer
-et ne constituent pas des performances validées.
+- Mise en place hybride potentiellement plus manuelle.
+- Gestion conjointe des charges relationnelles
+  et vectorielles dans le même système.
 
-Un benchmark comparatif pourra mesurer :
-- La latence de recherche.
-- Le rappel des documents pertinents.
-- L'impact des filtres sur les résultats.
-- Le temps d'indexation.
+## 5. Décision retenue
 
-Aucune supériorité de latence de Qdrant
-sur Milvus ou pgvector n'est affirmée
-sans mesures comparatives.
+**Base vectorielle sélectionnée : Qdrant.**
 
-## 5. Critère 3 — Simplicité d'orchestration locale
+Ce choix est principalement motivé par :
 
-Qdrant a été retenu notamment pour sa
-simplicité de démarrage avec Docker Compose.
+1. Son adaptation à la recherche hybride.
+2. Le filtrage sur les métadonnées.
+3. Sa simplicité de déploiement local.
+4. L'intégration avec Python et FastAPI.
+5. La séparation claire des responsabilités
+   entre stockage vectoriel et stockage relationnel.
 
-Le dépôt contient un fichier docker-compose.yml
-permettant le lancement de la base vectorielle.
+Neo4j restera responsable des relations du graphe.
 
-Version locale testée : Qdrant v1.15.5.
+PostgreSQL conservera les données applicatives.
 
-Commandes de démarrage :
+Qdrant gérera la récupération documentaire.
 
-```bash
-docker compose up -d
-docker compose ps
-```
+## 6. Validation locale
 
-Interface locale :
+Configuration actuelle :
+
+- Image Docker : `qdrant/qdrant:v1.15.5`.
+- Port REST : 6333.
+- Port gRPC : 6334.
+- Stockage persistant : volume Docker.
+
+Commandes :
+
+    docker compose up -d
+
+    docker compose ps
+
+Tableau de bord :
 
 http://localhost:6333/dashboard
 
-Le démarrage de Qdrant et l'accès au dashboard
-ont été vérifiés sur l'environnement Windows
-de développement.
+Le démarrage local et l'accès au tableau de bord
+ont été vérifiés.
 
-Le volume Docker configuré permet de conserver
-les données entre les redémarrages.
+Cela confirme la disponibilité du service,
+mais pas encore les performances de recherche.
 
-Milvus offre également un déploiement Docker,
-mais certaines configurations autonomes
-nécessitent plusieurs services complémentaires.
+## 7. Protocole de benchmark prévu
 
-pgvector constitue une alternative intéressante
-si l'équipe souhaite centraliser les données
-relationnelles et vectorielles dans PostgreSQL.
+Les trois solutions devront être évaluées,
+si les ressources et le temps le permettent,
+sur un même corpus et des requêtes identiques.
 
-## 6. Complémentarité avec Neo4j
+Mesures envisagées :
 
-Qdrant et Neo4j répondent à deux besoins distincts.
+- Temps moyen de recherche.
+- Latence P95.
+- Recall@10.
+- Effet des filtres de métadonnées.
+- Consommation mémoire.
+- Facilité d'exploitation.
 
-### Qdrant — Recherche documentaire
+Les volumes, paramètres d'indexation
+et conditions matérielles seront documentés.
 
-- Stockage des embeddings.
-- Recherche dense et sparse.
-- Filtrage par métadonnées.
-- Récupération des passages pertinents.
+Aucun résultat comparatif de latence
+n'est annoncé à ce stade.
 
-### Neo4j — Graphe de connaissances
+## 8. Conclusion
 
-- Relations entre étudiants et projets.
-- Relations entre projets et compétences.
-- Relations entre métiers et compétences.
-- Exploration des chemins de preuves.
+Qdrant représente le compromis retenu
+pour le prototype PathForge AI.
 
-### LLM — Génération augmentée
+Il fournit les mécanismes utiles
+à la récupération vectorielle et hybride
+sans imposer une infrastructure trop lourde.
 
-Le LLM exploitera les résultats documentaires
-et les relations pertinentes du graphe pour
-produire des recommandations explicables.
-
-Qdrant retrouve les informations,
-Neo4j relie les concepts et
-le LLM formule les explications.
-
-## 7. Décision architecturale
-
-La base vectorielle retenue pour
-le prototype PathForge AI est Qdrant.
-
-Cette décision est motivée par :
-1. La recherche hybride dense et lexicale.
-2. Le filtrage par métadonnées.
-3. L'intégration Python / FastAPI.
-4. La simplicité de déploiement local.
-5. La complémentarité avec Neo4j.
-
-Le choix sera confirmé par des expérimentations
-mesurant la pertinence, la latence
-et le comportement du moteur de recherche.
-
-## 8. État d'avancement
-
-- [x] Comparaison initiale des solutions.
-- [x] Sélection de Qdrant.
-- [x] Configuration Docker Compose.
-- [x] Démarrage local de Qdrant v1.15.5.
-- [x] Accès au tableau de bord vérifié.
-- [ ] Création de la collection vectorielle.
-- [ ] Ingestion des premiers embeddings.
-- [ ] Tests de recherche hybride.
-- [ ] Benchmark de latence et de pertinence.
-
-## 9. Références techniques
-
-- Qdrant — https://qdrant.tech/documentation/
-- Milvus — https://milvus.io/docs/
-- pgvector — https://github.com/pgvector/pgvector
+Ce choix sera réévalué si les benchmarks
+ou les contraintes du projet le justifient.
