@@ -1,65 +1,126 @@
 
-# Architecture technique — PathForge AI
+# Architecture Technique — PathForge AI
 
 ## 1. Présentation générale
 
-PathForge AI est une plateforme intelligente d'analyse des
-compétences et d'orientation professionnelle basée sur une
-architecture GraphRAG hybride.
+**PathForge AI** est une plateforme intelligente d'analyse des
+compétences et d'orientation professionnelle reposant sur une
+architecture **GraphRAG hybride**.
 
-Elle analyse les compétences documentées par les CV, les projets
-et les stages des étudiants, puis les compare aux exigences
-professionnelles associées aux métiers ciblés.
+Elle analyse les compétences documentées par les CV, projets
+et stages des étudiants, puis les compare aux compétences
+exigées pour un métier cible.
 
-La solution combine :
+Son objectif est de proposer des recommandations
+personnalisées, explicables et justifiées par des sources.
 
-- Recherche hybride : BM25 + embeddings.
-- Base vectorielle : Qdrant.
-- Reranking : Cross-Encoder.
-- Graphe de connaissances : Neo4j.
-- Génération augmentée : LLM.
-- Backend : FastAPI et Pydantic v2.
-- Frontend : React.
-- Base relationnelle : PostgreSQL.
+### Technologies principales
 
-L'architecture comporte deux pipelines complémentaires :
+| Composant | Technologie | Rôle |
+|---|---|---|
+| Recherche hybride | BM25 + embeddings | Recherche lexicale et sémantique |
+| Base vectorielle | Qdrant | Indexation et récupération de documents |
+| Reranking | Cross-Encoder | Reclassement des résultats |
+| Graphe de connaissances | Neo4j | Relations entre compétences et métiers |
+| Génération | LLM | Explications et recommandations sourcées |
+| Backend | FastAPI, Pydantic v2 | API et orchestration |
+| Frontend | React | Interface étudiant |
+| Base relationnelle | PostgreSQL | Profils et historiques |
+| Évaluation | Ragas | Qualité des réponses |
+| Déploiement | Docker Compose | Exécution des services |
 
-1. Ingestion, préparation et indexation des données.
-2. Recherche, analyse des écarts et génération des recommandations.
+L'architecture comprend deux pipelines complémentaires :
 
-Les composants non encore développés constituent
-l'architecture cible du prototype.
+1. **Pipeline d'ingestion :** préparation et indexation des données.
+2. **Pipeline GraphRAG :** recherche, analyse des écarts et génération.
 
 ---
 
 ## 2. Schéma d'architecture générale
 
+### Architecture GraphRAG hybride — Vue d'ensemble
 
-```mermaid
-flowchart TD
-    A["Sources de données"] --> B["Ingestion"]
-    B --> C["Qdrant"]
-    B --> D["Neo4j"]
-    C --> E["FastAPI"]
-    D --> E
-    E --> F["LLM"]
-    F --> G["React"]
-```
+**ÉTAPE 1 — SOURCES DE DONNÉES**
 
+| CV et projets | Offres d'emploi | Référentiel ESCO |
+|---|---|---|
+| Compétences documentées | Compétences recherchées | Métiers et relations |
 
-**Lecture du schéma :**
+**↓**
 
-- Le pipeline d'ingestion prépare les sources et alimente
-  les systèmes de stockage et d'indexation.
-- Qdrant retrouve les informations documentaires pertinentes.
-- Neo4j permet d'explorer les relations entre les entités.
-- FastAPI orchestre les recherches et la construction du contexte.
-- Le LLM génère des recommandations à partir des preuves disponibles.
-- React présente les résultats à l'étudiant.
-- Ragas permet d'évaluer la qualité des réponses.
+**ÉTAPE 2 — INGESTION ET PRÉTRAITEMENT**
 
-Les relations ESCO sont conservées sous une forme structurée
-pour l'import dans Neo4j. Elles ne nécessitent pas de chunking.
+Extraction → Nettoyage → Normalisation ESCO → Chunking → Embeddings
+
+**↓**
+
+**ÉTAPE 3 — STOCKAGE ET INDEXATION**
+
+| Qdrant | Neo4j | PostgreSQL |
+|---|---|---|
+| Index dense et sparse | Graphe de connaissances | Données applicatives |
+| Recherche hybride | Relations métiers-compétences | Profils et historiques |
+| Filtrage par métadonnées | Chemins de preuves | Gestion des informations |
+
+**↓**
+
+**ÉTAPE 4 — MOTEUR GRAPHRAG**
+
+| Composant | Traitement |
+|---|---|
+| FastAPI | Orchestration des requêtes |
+| Qdrant | Recherche hybride BM25 + embeddings |
+| Cross-Encoder | Fusion et reranking des résultats |
+| Neo4j | Exploration des relations du graphe |
+| Construction du contexte | Regroupement des documents et des preuves |
+| LLM | Génération de recommandations sourcées |
+
+**↓**
+
+**ÉTAPE 5 — RÉSULTATS PERSONNALISÉS**
+
+| Analyse | Résultat |
+|---|---|
+| Profil étudiant | Compétences documentées |
+| Métier cible | Compétences exigées |
+| Comparaison | Écarts identifiés |
+| Recommandations | Actions suggérées avec sources |
+
+**↓**
+
+**ÉTAPE 6 — INTERFACE UTILISATEUR**
+
+**React — PathForge AI**
+
+Import du CV → Sélection du métier → Analyse → Recommandations
+
+**Évaluation transversale :** Ragas, Recall@10,
+Faithfulness, Answer Relevance et mesures de latence.
+
+### Fonctionnement des deux pipelines
+
+**Pipeline d'ingestion :**
+
+Les données sources sont extraites, nettoyées et normalisées.
+
+Les documents textuels sont découpés et vectorisés
+avant leur indexation dans Qdrant.
+
+Les relations structurées entre métiers et compétences
+sont préparées pour leur exploitation dans Neo4j.
+
+**Pipeline de recherche et génération :**
+
+L'étudiant sélectionne un métier cible depuis React.
+
+FastAPI orchestre la recherche hybride dans Qdrant
+et l'exploration des relations Neo4j.
+
+Les informations retrouvées sont regroupées
+dans un contexte transmis au LLM.
+
+Le système produit une analyse des écarts
+et des recommandations accompagnées de sources.
 
 ---
 
@@ -67,91 +128,105 @@ pour l'import dans Neo4j. Elles ne nécessitent pas de chunking.
 
 ### 3.1 Référentiel ESCO
 
-**Source officielle :**
+**Source :**
 https://esco.ec.europa.eu/en/use-esco/download
 
 **Version :** ESCO v1.2.1.
 
-Fichiers présents dans le dépôt :
-
 | Fichier | Contenu |
 |---|---|
-| occupations_en.csv | 3 043 métiers |
-| skills_en.csv | 13 960 compétences |
-| occupationSkillRelations_data_ai_en.csv | 674 relations filtrées |
+| `occupations_en.csv` | 3 043 métiers |
+| `skills_en.csv` | 13 960 compétences |
+| `occupationSkillRelations_data_ai_en.csv` | 674 relations filtrées |
 
-Les relations filtrées portent sur huit métiers orientés
-Data, intelligence artificielle et développement logiciel.
+Le fichier des relations contient un sous-ensemble
+de huit métiers orientés Data, IA et développement.
 
-Ces données permettront de normaliser les compétences
-et de construire les relations métiers-compétences.
+Les données serviront à :
 
-Le script `scripts/validate_esco.py` a vérifié les
-674 relations filtrées.
+- Identifier les compétences associées aux métiers.
+- Normaliser les compétences extraites des CV.
+- Construire les relations dans Neo4j.
+- Justifier les correspondances métiers-compétences.
 
-**Résultat de validation :**
+### Validation du dataset
 
+Le script `scripts/validate_esco.py` a permis de vérifier
+la cohérence référentielle du sous-ensemble.
+
+**Résultats obtenus :**
+
+- Métiers : 3 043.
+- Compétences : 13 960.
+- Relations filtrées : 674.
 - Relations avec métier inconnu : 0.
 - Relations avec compétence inconnue : 0.
-- Intégrité référentielle du sous-ensemble : validée.
 
-Cette vérification ne constitue pas encore une validation
-complète de la pertinence sémantique des correspondances.
+**Statut : validation référentielle réussie.**
+
+Cette vérification ne constitue pas encore
+une évaluation de la pertinence des compétences.
 
 ### 3.2 Offres d'emploi
 
-**Source envisagée :**
-LinkedIn Job Postings (2023–2024), Kaggle.
+**Source envisagée :** LinkedIn Job Postings (2023–2024),
+disponible sur Kaggle.
 
 https://www.kaggle.com/datasets/arshkon/linkedin-job-postings
 
-Les offres permettront d'analyser les compétences
-et qualifications demandées par les employeurs.
+Ces données permettront d'étudier :
 
-Le corpus étant historique, il ne représente pas
-nécessairement les exigences actuelles du marché.
+- Les intitulés des postes.
+- Les descriptions professionnelles.
+- Les compétences exigées.
+- Les technologies mentionnées.
+
+Il s'agit d'un corpus historique,
+et non d'offres d'emploi nécessairement actuelles.
 
 ### 3.3 Profils étudiants
 
 Un corpus de profils fictifs ou anonymisés
 sera constitué pour les expérimentations.
 
-Informations prévues :
+Chaque profil pourra contenir :
 
 - Formation académique.
 - Projets universitaires.
 - Expériences de stage.
 - Compétences déclarées.
-- Technologies documentées.
+- Technologies utilisées.
 - Métier cible.
 
 ---
 
 ## 4. Pipeline d'ingestion et de préparation
 
-### Étape 1 — Extraction
+### 4.1 Extraction des données
 
-Python et Pandas seront utilisés pour lire
-et préparer les fichiers CSV et JSON.
+Python et Pandas permettront de traiter
+les fichiers CSV et JSON.
 
-Les CV PDF seront traités avec un outil
+Les CV PDF seront analysés avec un outil
 d'extraction de texte adapté.
 
-### Étape 2 — Nettoyage et normalisation
+Les informations extraites seront associées
+à leurs documents sources.
 
-Les traitements comprendront :
+### 4.2 Nettoyage et normalisation
+
+Les traitements prévus comprennent :
 
 - Suppression des doublons.
 - Gestion des valeurs manquantes.
-- Normalisation des intitulés de métiers.
+- Uniformisation des intitulés professionnels.
 - Extraction des compétences.
-- Rapprochement des compétences avec ESCO.
-- Conservation des identifiants et des sources.
+- Normalisation des compétences avec ESCO.
+- Conservation des identifiants et de la provenance.
 
-Les correspondances incertaines avec ESCO seront
-signalées plutôt que considérées comme validées.
+Les correspondances incertaines seront signalées.
 
-### Étape 3 — Chunking
+### 4.3 Chunking
 
 **Stratégie envisagée :** Recursive Character Chunking.
 
@@ -159,38 +234,33 @@ signalées plutôt que considérées comme validées.
 
 **Overlap cible :** 64 tokens.
 
-Les métadonnées comprendront notamment :
+Métadonnées prévues :
 
 - `doc_id`
 - `chunk_id`
 - `source`
 - `document_type`
-- `job_id` ou `profile_id`, si applicable
-- `esco_uri`, lorsqu'un lien ESCO est validé
+- `job_id`
+- `profile_id`
+- `esco_uri`
 
-Les relations métiers-compétences d'ESCO
-seront traitées comme des données structurées.
+Les champs non applicables pourront être omis.
 
-### Étape 4 — Génération des embeddings
+Les relations ESCO seront conservées
+sous forme structurée et ne seront pas
+découpées comme des documents textuels.
+
+### 4.4 Génération des embeddings
 
 **Modèle envisagé :** `BAAI/bge-m3`.
 
-**Dimension des vecteurs denses :** 1 024.
+**Dimension dense :** 1 024.
 
-Les représentations vectorielles seront
-indexées dans Qdrant avec leurs métadonnées.
+Les embeddings représenteront les contenus
+textuels sous forme de vecteurs numériques.
 
-L'indexation sparse nécessaire au BM25
-sera configurée séparément dans le pipeline.
-
-### Étape 5 — Construction du graphe
-
-Les métiers, compétences et relations ESCO seront
-importés dans Neo4j.
-
-Les preuves extraites des projets étudiants
-et les exigences issues des offres seront ensuite
-associées aux entités correspondantes.
+Ces vecteurs seront indexés dans Qdrant
+avec les métadonnées correspondantes.
 
 ---
 
@@ -198,30 +268,33 @@ associées aux entités correspondantes.
 
 ### 5.1 Recherche lexicale — BM25
 
-La recherche lexicale permet de retrouver
-les passages contenant des termes importants,
-notamment les noms de technologies et de métiers.
+BM25 permet de retrouver les documents
+contenant les termes recherchés.
+
+Cette approche est particulièrement utile
+pour les noms de technologies et les compétences
+explicitement mentionnées.
 
 ### 5.2 Recherche sémantique
 
-Les embeddings permettent de retrouver
-des passages sémantiquement proches,
-même lorsque les formulations diffèrent.
+La recherche sémantique utilise les embeddings
+pour retrouver les contenus proches en signification,
+même lorsque les mots utilisés diffèrent.
 
 ### 5.3 Fusion des résultats
 
 Les résultats lexicaux et sémantiques
-seront combinés pour obtenir un classement initial.
+seront combinés pour améliorer le classement.
 
-Une stratégie de fusion telle que
-Reciprocal Rank Fusion (RRF) pourra être utilisée.
+Une stratégie telle que Reciprocal Rank Fusion
+(RRF) pourra être expérimentée.
 
 ### 5.4 Reranking
 
 **Modèle envisagé :** `BAAI/bge-reranker-v2-m3`.
 
-Le Cross-Encoder évaluera la pertinence
-des passages candidats par rapport à la requête.
+Le Cross-Encoder permettra de réévaluer
+les passages candidats en fonction de la requête.
 
 **Configuration cible :**
 
@@ -229,153 +302,153 @@ des passages candidats par rapport à la requête.
 - Reranking : Cross-Encoder.
 - Sélection finale : Top-5.
 
-Le reranking sera exécuté dans le moteur applicatif,
-après la récupération initiale des candidats.
+Le reranking sera effectué dans le pipeline
+applicatif après la récupération des candidats.
 
 ---
 
 ## 6. Graphe de connaissances Neo4j
 
 Neo4j permettra de représenter les relations
-entre les étudiants, leurs expériences et les métiers.
+entre les étudiants, les projets, les compétences
+et les exigences des métiers.
 
 ### 6.1 Entités principales
 
-- Etudiant
-- Projet
-- Competence
-- Metier
-- OffreEmploi
+| Entité | Description |
+|---|---|
+| Etudiant | Profil de l'utilisateur |
+| Projet | Projet académique ou personnel |
+| Competence | Compétence identifiée ou normalisée |
+| Metier | Profession issue d'ESCO |
+| OffreEmploi | Offre professionnelle étudiée |
 
-### 6.2 Relations principales
+### 6.2 Relations du graphe
 
-- Etudiant -> REALISE -> Projet
-- Projet -> DOCUMENTE -> Competence
-- Metier -> REQUIERT -> Competence
-- OffreEmploi -> MENTIONNE -> Competence
-- Etudiant -> CIBLE -> Metier
+| Source | Relation | Destination |
+|---|---|---|
+| Etudiant | REALISE | Projet |
+| Projet | DOCUMENTE | Competence |
+| Metier | REQUIERT | Competence |
+| OffreEmploi | MENTIONNE | Competence |
+| Etudiant | CIBLE | Metier |
 
-Chaque relation devra conserver sa provenance
-lorsque des informations justificatives sont disponibles.
+Chaque relation conservera sa provenance
+lorsque des informations justificatives existent.
 
-### 6.3 Exploitation du graphe
+### 6.3 Exemple d'exploitation
 
-Le graphe permettra notamment de :
+Un étudiant a réalisé un projet NLP utilisant Python.
 
-1. Retrouver les compétences documentées
-   par les projets d'un étudiant.
-2. Identifier les compétences associées
-   au métier ciblé.
-3. Relier les exigences d'une offre aux
-   compétences normalisées.
-4. Reconstruire des chemins de preuves.
-5. Justifier les correspondances entre
-   un profil étudiant et un métier.
+Le graphe peut représenter :
 
-**Exemple :**
+**Projet NLP → DOCUMENTE → Python**
 
-Projet NLP -> DOCUMENTE -> Python
+Pour un métier ciblé :
 
-GenAI Engineer -> REQUIERT -> Python
+**GenAI Engineer → REQUIERT → Python**
 
-Ce chemin montre que Python est documenté
-dans un projet et associé à un métier.
+Ces relations permettent de retrouver
+les preuves associées à une compétence.
 
-Il ne prouve pas à lui seul que l'étudiant
-maîtrise toutes les compétences du métier.
+Elles ne suffisent pas à elles seules
+à certifier la maîtrise de cette compétence
+ou l'adéquation complète au métier.
 
 ---
 
-## 7. Analyse des écarts et génération des recommandations
+## 7. Analyse des écarts et génération
 
-### 7.1 Analyse des écarts
+### 7.1 Analyse des compétences
 
-Pour un métier cible, PathForge comparera :
+PathForge distinguera :
 
-- Les compétences documentées dans le profil.
-- Les compétences exigées par les offres et ESCO.
-- Les compétences déclarées sans preuve suffisante.
-- Les compétences exigées mais non documentées.
+1. Les compétences déclarées par l'étudiant.
+2. Les compétences documentées par ses expériences.
+3. Les compétences exigées par le métier cible.
+4. Les compétences dont les preuves sont insuffisantes.
 
-L'absence de preuve ne sera pas assimilée
-automatiquement à une absence de maîtrise.
+### 7.2 Identification des écarts
 
-### 7.2 Construction du contexte GraphRAG
+Le système comparera les compétences documentées
+aux exigences du métier cible.
 
-Le moteur combinera :
+Il identifiera les compétences exigées
+mais non encore documentées dans le profil.
 
-1. Les passages pertinents retrouvés dans Qdrant.
-2. Les relations pertinentes du graphe Neo4j.
-3. Le métier cible sélectionné.
-4. Les compétences et expériences documentées.
-5. Les références aux sources utilisées.
+L'absence de preuve ne sera pas considérée
+automatiquement comme une absence de maîtrise.
 
-### 7.3 Génération augmentée
+### 7.3 Construction du contexte GraphRAG
 
-Un LLM exploitera ce contexte pour produire :
+Le contexte de génération réunira :
+
+- Les passages pertinents issus de Qdrant.
+- Les relations pertinentes du graphe Neo4j.
+- Les informations autorisées du profil étudiant.
+- Les exigences du métier cible.
+- Les références aux documents utilisés.
+
+### 7.4 Recommandations personnalisées
+
+Le LLM produira :
 
 - Une synthèse des compétences documentées.
-- Une présentation des exigences du métier.
-- Une analyse argumentée des écarts.
-- Des recommandations personnalisées.
-- Les sources justifiant les conclusions.
+- Une analyse des exigences professionnelles.
+- Une identification des écarts.
+- Des recommandations de progression.
+- Des explications accompagnées de sources.
 
-Le modèle devra signaler explicitement
-les cas où les données sont insuffisantes.
+En cas d'informations insuffisantes,
+le système devra le signaler explicitement.
 
 ---
 
-## 8. Backend, frontend et stockage applicatif
+## 8. Backend et frontend
 
 ### 8.1 Backend — FastAPI
 
 FastAPI assurera :
 
-- La validation des entrées avec Pydantic v2.
-- L'import des profils et documents.
-- L'orchestration des requêtes Qdrant.
-- L'exploration du graphe Neo4j.
-- L'analyse des écarts de compétences.
-- La construction du contexte GraphRAG.
-- L'appel au modèle de génération.
-- La restitution des réponses et des sources.
+- La validation des requêtes avec Pydantic v2.
+- L'importation des documents.
+- L'orchestration du moteur GraphRAG.
+- La recherche dans Qdrant.
+- L'exploration des relations Neo4j.
+- L'analyse des écarts.
+- L'appel au LLM.
+- La restitution des recommandations sourcées.
 
-Un mécanisme SSE sera envisagé pour
-l'affichage progressif des réponses.
+Un endpoint de streaming SSE est prévu
+pour la génération progressive des réponses.
 
 ### 8.2 Frontend — React
 
-L'interface permettra à l'étudiant de :
+L'application web permettra à l'étudiant de :
 
 1. Importer son CV.
 2. Renseigner ses projets et expériences.
-3. Sélectionner un métier cible.
-4. Consulter les compétences documentées.
-5. Visualiser les écarts identifiés.
-6. Consulter les recommandations et leurs sources.
-
-L'interface affichera également les états
-de chargement et les erreurs éventuelles.
+3. Sélectionner son métier cible.
+4. Visualiser les compétences documentées.
+5. Consulter les compétences exigées.
+6. Identifier les écarts.
+7. Consulter les recommandations et leurs sources.
 
 ### 8.3 PostgreSQL
 
-PostgreSQL assurera le stockage des données
-applicatives autorisées, notamment :
+PostgreSQL sera utilisé pour stocker :
 
-- Profils étudiants.
-- Paramètres utilisateur.
-- Métier cible.
-- Historique des analyses.
-- Références aux documents sources.
+- Les profils étudiants autorisés.
+- Les paramètres utilisateur.
+- Le métier cible sélectionné.
+- Les historiques d'analyses.
+- Les références aux documents.
 
 ---
 
 ## 9. Évaluation et performances
 
-L'évaluation reposera sur un benchmark annoté
-permettant de tester la recherche et la génération.
-
-### 9.1 Métriques du moteur RAG
+### 9.1 Métriques principales
 
 | Métrique | Objectif cible |
 |---|---|
@@ -390,25 +463,25 @@ permettant de tester la recherche et la génération.
 
 - Précision d'extraction des compétences.
 - Rappel d'extraction des compétences.
-- Exactitude de la normalisation ESCO.
+- Exactitude de normalisation ESCO.
 - NDCG@10 pour le classement des offres.
 - Cohérence des relations du graphe.
 - Traçabilité des recommandations.
 
-### 9.3 Protocole envisagé
+### 9.3 Protocole d'évaluation envisagé
 
 Les expérimentations compareront :
 
-- Recherche lexicale seule.
-- Recherche sémantique seule.
-- Recherche hybride avec reranking.
-- Recherche hybride enrichie par Neo4j.
+1. La recherche lexicale seule.
+2. La recherche sémantique seule.
+3. La recherche hybride avec reranking.
+4. La recherche hybride enrichie par Neo4j.
 
-Les métriques seront mesurées sur des données
-de référence et des requêtes annotées.
+Les tests seront réalisés sur un jeu
+de données et de requêtes annotées.
 
-**Tous les seuils annoncés sont des objectifs
-prévisionnels, et non des résultats obtenus.**
+Les objectifs présentés sont prévisionnels
+et ne constituent pas des résultats obtenus.
 
 ---
 
@@ -416,44 +489,44 @@ prévisionnels, et non des résultats obtenus.**
 
 ### 10.1 Protection des données personnelles
 
-Les dépôts publics utiliseront des profils fictifs
+Le dépôt public utilisera des profils fictifs
 ou des données anonymisées et autorisées.
 
-Les CV réels seront protégés par des contrôles
-d'accès et une politique de conservation adaptée.
+Les CV réels nécessiteront un traitement
+adapté, avec contrôle d'accès et conservation limitée.
 
 ### 10.2 Protection des secrets
 
-- Aucune clé API dans le code source.
-- Utilisation de variables d'environnement.
+- Aucune clé API dans le dépôt GitHub.
+- Variables d'environnement pour les secrets.
 - Exclusion des fichiers `.env` sensibles de Git.
-- Gestion sécurisée des accès aux services.
+- Protection des accès aux services.
 
 ### 10.3 Fiabilité des recommandations
 
+- Conservation des références documentaires.
 - Distinction entre compétences déclarées et documentées.
-- Conservation des preuves et références.
-- Indication des correspondances incertaines.
-- Refus de conclusions sans preuves suffisantes.
-- Absence de garantie automatique d'employabilité.
+- Signalement des correspondances incertaines.
+- Absence de conclusions sans preuves suffisantes.
+- Aucune garantie automatique d'employabilité.
 
-### 10.4 Sécurité du pipeline RAG
+### 10.4 Sécurité du pipeline GraphRAG
 
 Les documents récupérés seront considérés
 comme des données non fiables.
 
-Le LLM ne devra pas traiter les instructions
-présentes dans les documents comme des
-instructions système ou utilisateur.
+Le système ne devra pas suivre les instructions
+contenues dans un document récupéré comme
+s'il s'agissait d'instructions système.
 
 ### 10.5 Isolation réseau
 
-Les services Qdrant, Neo4j et PostgreSQL
-seront isolés dans des réseaux Docker internes
+Qdrant, Neo4j et PostgreSQL seront configurés
+dans des réseaux Docker internes
 lors du déploiement complet.
 
 Les ports seront exposés uniquement
-lorsqu'ils sont nécessaires.
+lorsqu'ils seront nécessaires.
 
 ---
 
@@ -461,28 +534,28 @@ lorsqu'ils sont nécessaires.
 
 ### 11.1 Docker Compose
 
-Docker Compose permettra de déployer
-progressivement les services de PathForge AI.
+Docker Compose permettra de lancer
+progressivement les services nécessaires.
 
-**État actuel :**
+**Environnement déjà validé :**
 
-- Qdrant v1.15.5 installé via Docker.
-- Conteneur Qdrant démarré localement.
+- Qdrant v1.15.5 installé et démarré.
+- Conteneur local fonctionnel.
 - Tableau de bord Qdrant accessible.
-- Fichier docker-compose.yml présent sur GitHub.
+- Fichier `docker-compose.yml` disponible sur GitHub.
 
-L'intégration de Neo4j, PostgreSQL, FastAPI
-et React sera réalisée progressivement.
+L'intégration des autres services
+sera réalisée progressivement.
 
-### 11.2 Intégration continue
+### 11.2 CI/CD
 
-GitHub Actions sera utilisé pour :
+GitHub Actions permettra :
 
-- Exécuter les tests Pytest.
-- Effectuer le linting avec Ruff.
-- Vérifier la qualité du code.
-- Détecter les régressions.
-- Contrôler les modifications avant fusion.
+- L'exécution des tests Pytest.
+- Le linting avec Ruff.
+- Les vérifications automatiques du code.
+- La détection des régressions.
+- Les contrôles avant fusion sur `main`.
 
 ---
 
@@ -494,42 +567,42 @@ GitHub Actions sera utilisé pour :
 - [x] Référentiel ESCO v1.2.1 téléchargé.
 - [x] Relations ESCO filtrées pour les métiers Data/IA.
 - [x] Validation des 674 relations ESCO.
-- [x] Script de validation ajouté au dépôt GitHub.
+- [x] Script de validation ajouté à GitHub.
 - [x] Choix de Qdrant documenté.
 - [x] Docker Compose configuré.
 - [x] Qdrant démarré localement.
 
 ### À réaliser
 
-- [ ] Préparer le corpus d'offres d'emploi.
-- [ ] Constituer les profils étudiants de démonstration.
-- [ ] Implémenter l'ingestion et le chunking.
-- [ ] Générer et indexer les embeddings.
-- [ ] Développer la recherche hybride.
-- [ ] Intégrer le reranking.
-- [ ] Construire le graphe Neo4j.
-- [ ] Développer le backend FastAPI.
-- [ ] Développer l'interface React.
-- [ ] Intégrer le LLM et les recommandations.
-- [ ] Réaliser les évaluations Ragas.
-- [ ] Configurer les tests automatisés et CI/CD.
-- [ ] Finaliser le déploiement multi-services.
+- [ ] Préparation du corpus d'offres d'emploi.
+- [ ] Constitution des profils étudiants fictifs.
+- [ ] Implémentation complète de l'ingestion.
+- [ ] Génération et indexation des embeddings.
+- [ ] Recherche hybride et reranking.
+- [ ] Construction du graphe Neo4j.
+- [ ] Développement du backend FastAPI.
+- [ ] Développement du frontend React.
+- [ ] Intégration du LLM.
+- [ ] Évaluation avec Ragas.
+- [ ] Tests automatisés et CI/CD.
+- [ ] Déploiement final multi-services.
 
 ---
 
 ## 13. Conclusion
 
-L'architecture PathForge AI combine
+L'architecture de PathForge AI combine
 la recherche documentaire hybride,
-l'exploration d'un graphe de connaissances
+un graphe de connaissances
 et la génération augmentée par LLM.
 
-Cette approche vise à identifier les compétences
-documentées des étudiants, à les comparer
-aux exigences des métiers et à expliquer
-les écarts à partir de preuves vérifiables.
+Cette approche permettra de relier
+les expériences et compétences des étudiants
+aux exigences des métiers, afin de produire
+des recommandations personnalisées,
+explicables et appuyées par des sources.
 
-Le système constitue un outil d'aide
-à l'orientation professionnelle et non
-un mécanisme automatique de certification
+PathForge AI constitue un outil d'aide
+à l'orientation professionnelle,
+et non un système de certification automatique
 des compétences ou de recrutement.
