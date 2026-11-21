@@ -7,9 +7,9 @@ Le projet PathForge AI est réalisé par trois membres.
 
 | Membre | Rôle principal |
 |---|---|
-| Fourati Yosr | Lead Data / Retrieval |
-| Essaied Nour | Lead Backend / MLOps |
-| Trabelsi Nidhal | Lead Frontend / Infra |
+| Essaied Nour | à remplir |
+| Fourati Yosr  | à remplir |
+| Trabelsi Nidhal | à remplir |
 
 L'organisation repose sur une répartition
 des responsabilités principales et une collaboration
