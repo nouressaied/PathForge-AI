@@ -101,9 +101,9 @@ Le reste de la plateforme est en cours de développement.
 
 ## Équipe
 
-- Fourati Yosr — Lead Data / Retrieval
-- Essaied Nour — Lead Backend / MLOps
-- Trabelsi Nidhal — Lead Frontend / Infra
+- Essaied Nour — 
+- Fourati Yosr — 
+- Trabelsi Nidhal — 
 
 ## État du projet
 
