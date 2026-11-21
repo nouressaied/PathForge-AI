@@ -10,8 +10,8 @@
 **Nature :** Projet académique d'ingénierie.
 
 **Équipe :**
-- Fourati Yosr
 - Essaied Nour
+- Fourati Yosr
 - Trabelsi Nidhal
 
 ## 2. Contexte et problématique
