@@ -17,7 +17,7 @@ sur les interfaces entre modules.
 
 ## 2. Responsabilités principales
 
-### Fourati Yosr — Data / Retrieval
+###  — Data / Retrieval
 
 Responsabilités :
 
@@ -30,7 +30,7 @@ Responsabilités :
 - Recherche hybride BM25 et dense.
 - Expérimentation du reranking.
 
-### Essaied Nour — Backend / MLOps
+###  — Backend / MLOps
 
 Responsabilités :
 
@@ -43,7 +43,7 @@ Responsabilités :
 - Tests backend.
 - Évaluation et suivi de la qualité.
 
-### Trabelsi Nidhal — Frontend / Infra
+###  — Frontend / Infra
 
 Responsabilités :
 
@@ -64,7 +64,7 @@ Responsabilités :
 - C : Contributeur ou collaborateur.
 - - : Intervention ponctuelle si nécessaire.
 
-| Module | Yosr | Nour | Nidhal |
+| Module | membre1 | membre2 | membre3 |
 |---|---|---|---|
 | Préparation des datasets | R | C | - |
 | Normalisation ESCO | R | C | - |
