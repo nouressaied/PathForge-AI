@@ -1,69 +1,272 @@
 
-# ESCO Dataset — PathForge AI
 
-## 1. Description
+\# ESCO Dataset — PathForge AI
+
+
+
+\## 1. Description
+
+
 
 ESCO (European Skills, Competences, Qualifications and Occupations)
-est un référentiel officiel européen qui décrit les métiers,
-les compétences et leurs relations.
 
-Version : ESCO v1.2.1
-Langue : English
-Format : CSV
+est le référentiel européen des métiers et des compétences.
 
-## 2. Source officielle
 
-https://esco.ec.europa.eu/en/use-esco/download
 
-## 3. Fichiers disponibles
+Il constitue une source de référence pour la normalisation
 
-| Fichier | Description | Statut |
-|---|---|---|
-| occupations_en.csv | Référentiel des métiers | Intégré |
-| skills_en.csv | Référentiel des compétences | Intégré |
-| occupationSkillRelations_data_ai_en.csv | Relations filtrées pour les métiers Data/IA | Intégré |
+des compétences et la construction du graphe de connaissances
 
-## 4. Filtrage des relations
+de PathForge AI.
 
-Le fichier original occupationSkillRelations_en.csv
-contient les relations entre les métiers et les compétences.
 
-Pour le premier prototype de PathForge AI,
-un sous-ensemble thématique a été constitué :
 
-- 8 métiers orientés Data, IA et développement logiciel.
-- 674 relations métiers-compétences.
-- Identifiants ESCO conservés pour maintenir
-  les correspondances avec les autres fichiers.
+\- \*\*Version :\*\* ESCO v1.2.1
 
-Ce fichier est un sous-ensemble de travail
-et non l'intégralité du référentiel ESCO.
+\- \*\*Langue :\*\* anglais
 
-## 5. Utilisation dans PathForge AI
+\- \*\*Format retenu :\*\* JSON
 
-Les données permettront de :
+\- \*\*Source :\*\* https://esco.ec.europa.eu/en/use-esco/download
 
-1. Identifier les compétences associées aux métiers.
-2. Normaliser les compétences extraites des CV et projets.
-3. Construire un graphe de connaissances dans Neo4j.
-4. Comparer les compétences documentées des étudiants
-   aux exigences du métier cible.
-5. Justifier les recommandations grâce aux relations ESCO.
 
-## 6. Technologies associées
 
-- Python / Pandas : préparation et validation des CSV.
-- Neo4j : relations métiers-compétences.
-- Qdrant : recherche hybride sur les contenus indexés.
-- GraphRAG : génération de recommandations sourcées.
+\## 2. Composition du dataset
 
-## 7. État d'avancement
 
-- [x] Téléchargement d'ESCO v1.2.1.
-- [x] Ajout de occupations_en.csv.
-- [x] Ajout de skills_en.csv.
-- [x] Préparation du fichier filtré des relations.
-- [x] Ajout du fichier filtré sur GitHub.
-- [ ] Vérification des relations et des identifiants ESCO.
-- [ ] Prétraitement et indexation des données.
-- [ ] Construction du graphe Neo4j.
+
+| Fichier | Contenu | Nombre |
+
+|---|---|---:|
+
+| `occupations.json` | Métiers ESCO | 3 043 |
+
+| `skills.json` | Compétences ESCO | 13 960 |
+
+| `occupation\_skill\_relations.json` | Relations métiers-compétences | 126 051 |
+
+
+
+Les fichiers JSON sont obtenus par conversion
+
+des fichiers CSV officiels ESCO v1.2.1.
+
+
+
+Les identifiants d'origine sont conservés.
+
+
+
+\## 3. Typologie des données
+
+
+
+\### Métiers
+
+
+
+Chaque métier possède notamment :
+
+
+
+\- Un identifiant officiel `conceptUri`.
+
+\- Un intitulé `preferredLabel`.
+
+\- Une description textuelle.
+
+\- Des informations de classification.
+
+
+
+\### Compétences
+
+
+
+Chaque compétence contient notamment :
+
+
+
+\- Un identifiant officiel `conceptUri`.
+
+\- Un intitulé `preferredLabel`.
+
+\- Une description.
+
+\- Des informations complémentaires.
+
+
+
+\### Relations
+
+
+
+Les relations sont représentées par :
+
+
+
+\- `occupationUri`
+
+\- `skillUri`
+
+\- `relationType`
+
+\- `skillType`
+
+
+
+Ces données permettront de construire
+
+les associations métiers-compétences dans Neo4j.
+
+
+
+\## 4. Validation des données
+
+
+
+Le script `scripts/validate\_esco.py`
+
+vérifie l'intégrité référentielle des relations.
+
+
+
+Commande :
+
+
+
+&#x20;   python scripts/validate\_esco.py
+
+
+
+Résultats :
+
+
+
+\- 3 043 métiers.
+
+\- 13 960 compétences.
+
+\- 126 051 relations.
+
+\- 0 métier inconnu.
+
+\- 0 compétence inconnue.
+
+
+
+\*\*Statut : validation référentielle réussie.\*\*
+
+
+
+Cette validation ne mesure pas encore
+
+la pertinence sémantique des données.
+
+
+
+\## 5. Utilisation dans PathForge AI
+
+
+
+\### Qdrant
+
+
+
+Les intitulés et descriptions des métiers
+
+et compétences seront préparés comme documents textuels,
+
+puis transformés en embeddings pour la recherche vectorielle.
+
+
+
+\### Neo4j
+
+
+
+Les relations métiers-compétences seront utilisées
+
+pour construire le graphe de connaissances.
+
+
+
+\### GraphRAG
+
+
+
+Les informations retrouvées permettront
+
+de comparer les compétences documentées des étudiants
+
+aux exigences des métiers et de générer
+
+des recommandations sourcées.
+
+
+
+\## 6. Pipeline de préparation
+
+
+
+1\. Chargement des données JSON.
+
+2\. Extraction des informations textuelles.
+
+3\. Nettoyage et préparation des documents.
+
+4\. Chunking adapté à la longueur des textes.
+
+5\. Génération des embeddings.
+
+6\. Indexation des vecteurs dans Qdrant.
+
+7\. Recherche sémantique Top-k.
+
+
+
+\## 7. État d'avancement
+
+
+
+\- \[x] Téléchargement du référentiel officiel ESCO v1.2.1.
+
+\- \[x] Conversion complète des CSV en JSON.
+
+\- \[x] Validation des 126 051 relations.
+
+\- \[x] Vérification des identifiants métiers et compétences.
+
+\- \[ ] Préparation des documents pour l'ingestion.
+
+\- \[ ] Chunking et génération des embeddings.
+
+\- \[ ] Indexation Qdrant.
+
+\- \[ ] Recherche sémantique Top-5.
+
+\- \[ ] Construction du graphe Neo4j.
+
+
+
+\## 8. Limites
+
+
+
+Le corpus ESCO est en anglais.
+
+
+
+Ses descriptions sont relativement courtes :
+
+le découpage sera donc adapté à leur longueur.
+
+
+
+Le référentiel ne représente pas directement
+
+l'ensemble des offres d'emploi actuelles du marché.
+
+
+

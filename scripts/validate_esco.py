@@ -1,39 +1,61 @@
 
-import csv
+import json
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parents[1] / "data" / "raw" / "esco"
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "data" / "raw" / "esco"
 
-def load_csv(filename):
-    with open(BASE / filename, encoding="utf-8-sig", newline="") as f:
-        return list(csv.DictReader(f))
 
-occupations = load_csv("occupations_en.csv")
-skills = load_csv("skills_en.csv")
-relations = load_csv("occupationSkillRelations_data_ai_en.csv")
+def load_json(filename):
+    path = DATA_DIR / filename
 
-print("Métiers :", len(occupations))
-print("Compétences :", len(skills))
-print("Relations filtrées :", len(relations))
+    with path.open("r", encoding="utf-8") as file:
+        return json.load(file)
 
-occupation_ids = {row["conceptUri"] for row in occupations}
-skill_ids = {row["conceptUri"] for row in skills}
 
-invalid_occupations = [
-    row for row in relations
-    if row["occupationUri"] not in occupation_ids
-]
+def main():
+    occupations = load_json("occupations.json")
+    skills = load_json("skills.json")
+    relations = load_json("occupation_skill_relations.json")
 
-invalid_skills = [
-    row for row in relations
-    if row["skillUri"] not in skill_ids
-]
+    occupation_uris = {
+        row["conceptUri"]
+        for row in occupations
+    }
 
-print("Relations avec métier inconnu :", len(invalid_occupations))
-print("Relations avec compétence inconnue :", len(invalid_skills))
+    skill_uris = {
+        row["conceptUri"]
+        for row in skills
+    }
 
-if not invalid_occupations and not invalid_skills:
-    print("VALIDATION REUSSIE : toutes les relations sont cohérentes.")
-else:
-    print("VALIDATION ECHOUEE : certaines relations sont invalides.")
-    raise SystemExit(1)
+    unknown_occupations = []
+    unknown_skills = []
+
+    for relation in relations:
+        occupation_uri = relation.get("occupationUri")
+        skill_uri = relation.get("skillUri")
+
+        if occupation_uri not in occupation_uris:
+            unknown_occupations.append(occupation_uri)
+
+        if skill_uri not in skill_uris:
+            unknown_skills.append(skill_uri)
+
+    print("=== VALIDATION ESCO JSON ===")
+    print(f"Metiers : {len(occupations)}")
+    print(f"Competences : {len(skills)}")
+    print(f"Relations : {len(relations)}")
+    print(f"Metiers inconnus : {len(unknown_occupations)}")
+    print(f"Competences inconnues : {len(unknown_skills)}")
+
+    if not unknown_occupations and not unknown_skills:
+        print("VALIDATION REUSSIE : toutes les relations sont coherentes.")
+    else:
+        print("VALIDATION ECHOUEE : relations invalides detectees.")
+        print("Exemples de metiers inconnus :", unknown_occupations[:5])
+        print("Exemples de competences inconnues :", unknown_skills[:5])
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()
