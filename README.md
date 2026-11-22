@@ -6,119 +6,237 @@
 PathForge AI est une plateforme intelligente d'orientation
 professionnelle destinée aux étudiants.
 
-Elle exploite les CV, projets et expériences académiques
-pour identifier les compétences documentées, les comparer
-aux exigences d'un métier cible et proposer des
-recommandations personnalisées et explicables.
+Elle analyse les compétences documentées par les CV,
+les projets et les expériences académiques, puis les compare
+aux exigences d'un métier cible afin de proposer des
+recommandations personnalisées, explicables et sourcées.
 
-## Problématique
+## 1. Problématique
 
-Les étudiants acquièrent des compétences au cours de leurs
-études, mais disposent rarement d'une vision claire de leur
-adéquation avec les exigences du marché de l'emploi.
+Les étudiants développent de nombreuses compétences
+au cours de leurs formations, stages et projets.
 
-Les outils classiques de CV matching reposent essentiellement
-sur des mots-clés, sans toujours prendre en compte les
-relations entre compétences, projets et métiers.
+Cependant, ils disposent rarement d'une vision claire
+de l'adéquation entre leurs compétences et les exigences
+des métiers qu'ils souhaitent exercer.
 
-## Notre solution
+Les approches classiques de rapprochement entre profils
+et métiers ne prennent pas toujours en compte les preuves
+issues des projets ni les relations entre les compétences.
 
-PathForge AI s'appuie sur une architecture GraphRAG hybride
-combinant recherche documentaire et graphe de connaissances.
+**Comment relier les compétences documentées d'un étudiant
+aux exigences professionnelles d'un métier, tout en
+justifiant les recommandations proposées ?**
+
+## 2. Notre solution
+
+PathForge AI repose sur une architecture GraphRAG hybride,
+combinant recherche documentaire, graphe de connaissances
+et génération augmentée par un LLM.
 
 La plateforme vise à permettre de :
 
-1. Analyser un CV et des projets académiques.
-2. Identifier les compétences documentées.
+1. Analyser un CV, des projets et des expériences académiques.
+2. Identifier les compétences déclarées et documentées.
 3. Sélectionner un métier cible.
-4. Comparer les compétences du profil aux exigences du métier.
-5. Identifier les écarts et preuves manquantes.
-6. Générer des recommandations justifiées par des sources.
+4. Retrouver les compétences exigées pour ce métier.
+5. Identifier les écarts et les preuves insuffisantes.
+6. Proposer des recommandations personnalisées et sourcées.
 
-## Technologies principales
+L'objectif est d'accompagner l'étudiant dans
+sa progression professionnelle, sans prétendre
+certifier automatiquement ses compétences.
 
-| Domaine | Technologies |
+## 3. Architecture générale
+
+PathForge AI s'appuie sur deux pipelines complémentaires.
+
+### Pipeline 1 — Ingestion et indexation
+
+**Sources : ESCO, offres d'emploi, CV et projets**
+
+↓
+
+**Extraction et préparation des données**
+
+↓
+
+**Normalisation des compétences et chunking**
+
+↓
+
+**Génération des embeddings**
+
+↓
+
+**Indexation Qdrant et construction du graphe Neo4j**
+
+### Pipeline 2 — Recherche et génération
+
+**React — Interface étudiant**
+
+↓
+
+**FastAPI — Orchestration**
+
+↓
+
+**Recherche hybride Qdrant + Exploration Neo4j**
+
+↓
+
+**Fusion des résultats et reranking**
+
+↓
+
+**Construction du contexte GraphRAG**
+
+↓
+
+**LLM — Analyse des écarts et recommandations sourcées**
+
+PostgreSQL est prévu pour le stockage des données
+applicatives autorisées.
+
+Cette architecture représente la cible technique
+du projet. Tous les composants ne sont pas
+encore implémentés.
+
+Pour plus de détails :
+[Architecture technique](docs/architecture.md).
+
+## 4. Technologies principales
+
+| Domaine | Technologie |
 |---|---|
 | Langage principal | Python |
 | Backend | FastAPI |
 | Frontend | React |
-| Recherche vectorielle | Qdrant |
+| Base vectorielle | Qdrant |
 | Graphe de connaissances | Neo4j |
 | Recherche hybride | BM25 + embeddings |
 | Reranking | Cross-Encoder |
-| Génération | LLM |
+| Génération augmentée | LLM |
 | Base relationnelle | PostgreSQL |
 | Évaluation | Ragas |
 | Conteneurisation | Docker Compose |
 
-## Sources de données
+Ces technologies constituent l'architecture
+cible du prototype.
 
-- Référentiel européen ESCO.
-- Offres d'emploi historiques issues d'un corpus public.
-- Profils étudiants fictifs ou anonymisés.
+## 5. Sources de données
 
-Le référentiel ESCO et un sous-ensemble de relations
-métiers-compétences sont déjà présents dans le dépôt.
+PathForge AI repose sur plusieurs sources
+de données complémentaires.
 
-## Démarrage local
+### ESCO — Référentiel métiers-compétences
+
+ESCO v1.2.1 fournit les métiers, les compétences
+et leurs relations.
+
+Le référentiel complet a été converti en JSON
+et validé localement :
+
+- 3 043 métiers.
+- 13 960 compétences.
+- 126 051 relations métiers-compétences.
+
+Les identifiants officiels sont conservés
+afin d'assurer la cohérence entre les données.
+
+La documentation détaillée du dataset est disponible ici :
+
+[Dataset ESCO](data/raw/esco/README.md).
+
+### Offres d'emploi
+
+Un corpus d'offres d'emploi historiques
+sera exploité afin d'analyser les compétences
+et qualifications demandées par les employeurs.
+
+### Profils étudiants
+
+Des profils fictifs ou anonymisés et autorisés
+seront utilisés pour expérimenter l'analyse
+des compétences et les recommandations.
+
+## 6. Démarrage local
 
 ### Prérequis
 
 - Git
 - Docker Desktop
 - Docker Compose
+- Python
 
-### Lancer Qdrant
+### Démarrer les services disponibles
 
 Depuis la racine du dépôt :
 
     docker compose up -d
 
-Vérifier le conteneur :
+Vérifier les conteneurs :
 
     docker compose ps
+
+### Accéder à Qdrant
 
 Tableau de bord :
 
 http://localhost:6333/dashboard
 
-Pour arrêter les services :
+### Arrêter les services
 
     docker compose down
 
-Ces commandes démarrent actuellement Qdrant.
-Le reste de la plateforme est en cours de développement.
+Qdrant v1.15.5 a été démarré et vérifié localement.
 
-## Documentation
+Le moteur GraphRAG complet reste en cours
+de développement.
 
-| Document | Description |
+## 7. Documentation
+
+| Document | Contenu |
 |---|---|
-| [Fiche de cadrage](docs/fiche_cadrage_ingenierie.md) | Contexte, objectifs et contraintes |
-| [Architecture technique](docs/architecture.md) | Organisation et flux techniques |
-| [Choix de Qdrant](docs/choix_base_vectorielle.md) | Comparaison des bases vectorielles |
+| [Fiche de cadrage](docs/fiche_cadrage_ingenierie.md) | Problématique, objectifs et contraintes |
+| [Architecture technique](docs/architecture.md) | Pipelines et composants techniques |
+| [Choix de Qdrant](docs/choix_base_vectorielle.md) | Comparaison Qdrant, Milvus et pgvector |
 | [Backlog MoSCoW](docs/backlog_moscow.md) | Fonctionnalités et priorités |
-| [Répartition de l'équipe](docs/repartition_equipe.md) | Responsabilités et collaboration |
+| [Dataset ESCO](data/raw/esco/README.md) | Source, structure et validation des données |
 
-## Équipe
+## 8. État d'avancement
 
-- Essaied Nour — 
-- Fourati Yosr — 
-- Trabelsi Nidhal — 
+### Réalisé
 
-## État du projet
+- [x] Création et structuration du dépôt GitHub.
+- [x] Définition de la vision produit.
+- [x] Conception de l'architecture initiale.
+- [x] Comparaison et sélection de Qdrant.
+- [x] Configuration initiale de Docker Compose.
+- [x] Démarrage local de Qdrant.
+- [x] Préparation du référentiel ESCO complet en JSON.
+- [x] Validation locale des 126 051 relations ESCO.
 
-Le projet est actuellement au stade de cadrage technique
-et de préparation des premières données.
+### En cours et à réaliser
 
-Les datasets ESCO ont été intégrés et vérifiés,
-et Qdrant a été démarré localement avec Docker.
+- [ ] Publication du nouveau corpus JSON sur GitHub.
+- [ ] Préparation du corpus pour l'ingestion.
+- [ ] Implémentation du chunking.
+- [ ] Génération et indexation des embeddings.
+- [ ] Recherche sémantique Top-5 dans Qdrant.
+- [ ] Intégration de Neo4j.
+- [ ] Développement de FastAPI et React.
+- [ ] Génération de recommandations avec le LLM.
+- [ ] Évaluation du système.
 
-L'architecture GraphRAG complète constitue
-l'objectif de développement des prochaines étapes.
+## 9. Limites
 
-## Limites
+PathForge AI est un outil d'aide à l'orientation
+professionnelle.
 
-PathForge AI est un outil d'aide à l'orientation.
+Il ne constitue pas un outil de certification
+des compétences et ne garantit ni l'employabilité
+ni le recrutement d'un étudiant.
 
-Il ne certifie pas les compétences d'un étudiant
-et ne garantit ni son employabilité ni son recrutement.
+Les recommandations dépendront de la qualité
+des informations fournies et des sources utilisées.
