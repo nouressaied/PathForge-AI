@@ -48,6 +48,8 @@ sa progression professionnelle, sans prétendre
 certifier automatiquement ses compétences.
 
 ## 3. Architecture générale
+<img width="1000" height="515" alt="Capture d&#39;écran 2026-11-22 212809" src="https://github.com/user-attachments/assets/4e04f768-2988-4e46-bd3e-c6b6dc2fef52" />
+
 
 PathForge AI s'appuie sur deux pipelines complémentaires.
 
